@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->timestamp('privacy_consent_at')->nullable()->after('email_verified_at');
+            $table->enum('role', ['emprendedor', 'comercio', 'admin'])->default('emprendedor')->after('email');
+            $table->string('phone', 20)->nullable()->after('role');
         });
 
         Schema::create('categories', function (Blueprint $table) {
@@ -185,7 +187,7 @@ return new class extends Migration
         Schema::dropIfExists('categories');
 
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('privacy_consent_at');
+            $table->dropColumn(['privacy_consent_at', 'role', 'phone']);
         });
     }
 };
