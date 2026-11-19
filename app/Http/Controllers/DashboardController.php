@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Establishment;
+use App\Models\Opportunity;
+use App\Models\Product;
 use App\Models\TeamInvitation;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -11,7 +14,8 @@ class DashboardController extends Controller
 {
     public function __invoke(Request $request): Response
     {
-        $email = strtolower($request->user()->email);
+        $user  = $request->user();
+        $email = strtolower($user->email);
 
         $pendingInvitations = TeamInvitation::query()
             ->with(['inviter', 'team'])
@@ -23,16 +27,27 @@ class DashboardController extends Controller
             ->latest()
             ->get()
             ->map(fn (TeamInvitation $invitation) => [
-                'code' => $invitation->code,
+                'code'        => $invitation->code,
                 'inviterName' => $invitation->inviter->name,
-                'team' => [
+                'team'        => [
                     'name' => $invitation->team->name,
                     'slug' => $invitation->team->slug,
                 ],
             ]);
 
+        $profile = $user->entrepreneurProfile;
+
         return Inertia::render('Dashboard', [
-            'pendingInvitations' => $pendingInvitations,
+            'pendingInvitations'    => $pendingInvitations,
+            'totalEstablecimientos' => Establishment::count(),
+            'totalProductos'        => $profile
+                ? Product::where('entrepreneur_profile_id', $profile->id)->count()
+                : 0,
+            'totalOportunidades'    => $profile
+                ? Opportunity::where('entrepreneur_profile_id', $profile->id)
+                    ->whereNotIn('status', ['no_concretada'])
+                    ->count()
+                : 0,
         ]);
     }
 }
