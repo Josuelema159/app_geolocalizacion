@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ArrowLeft } from '@lucide/vue';
+import { ArrowLeft, Plus, Trash2 } from '@lucide/vue';
+import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -15,9 +16,12 @@ const props = defineProps<{
     categorias: Category[];
 }>();
 
+const photoPreview = ref('');
+
 const form = useForm({
     name: '',
     category_id: '' as string | number,
+    photo: null as File | null,
     description: '',
     presentation: '',
     wholesale_price: '' as string | number,
@@ -26,13 +30,23 @@ const form = useForm({
     weekly_capacity: '' as string | number,
     shelf_life_days: '' as string | number,
     storage_conditions: '',
+    required_temperature_min: '' as string | number,
+    required_temperature_max: '' as string | number,
     coverage_zones: '',
     delivery_frequency: '',
+    documentation: [''] as string[],
     is_public: true,
 });
 
+function onPhotoChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0] ?? null;
+    form.photo = file;
+    photoPreview.value = file ? URL.createObjectURL(file) : '';
+}
+
 function submit() {
-    form.post('/productos');
+    form.post(productosUrl.value, { forceFormData: true });
 }
 </script>
 
@@ -42,7 +56,7 @@ function submit() {
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
         <div class="flex items-center gap-3">
             <Button variant="ghost" size="sm" as-child>
-                <Link :href="productosUrl.value">
+                <Link :href="productosUrl">
                     <ArrowLeft class="mr-1 h-4 w-4" />
                     Volver
                 </Link>
@@ -53,128 +67,122 @@ function submit() {
             </div>
         </div>
 
-        <form class="mx-auto w-full max-w-2xl space-y-6" @submit.prevent="submit">
-            <!-- Información básica -->
-            <div class="rounded-xl border bg-card p-6 space-y-4">
-                <h2 class="font-semibold text-base">Información básica</h2>
+        <form class="mx-auto w-full max-w-3xl space-y-6" @submit.prevent="submit">
+            <div class="space-y-4 rounded-xl border bg-card p-6">
+                <h2 class="text-base font-semibold">Información básica</h2>
                 <Separator />
-
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div class="space-y-1.5 sm:col-span-2">
                         <Label for="name">Nombre del producto *</Label>
                         <Input id="name" v-model="form.name" placeholder="Ej: Mermelada de mora 250g" required />
-                        <p v-if="form.errors.name" class="text-xs text-destructive">{{ form.errors.name }}</p>
                     </div>
-
                     <div class="space-y-1.5">
                         <Label for="category_id">Categoría</Label>
-                        <select
-                            id="category_id"
-                            v-model="form.category_id"
-                            class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        >
+                        <select id="category_id" v-model="form.category_id" class="h-9 w-full rounded-md border border-input bg-background px-3 text-sm">
                             <option value="">Sin categoría</option>
-                            <option v-for="cat in categorias" :key="cat.id" :value="cat.id">
-                                {{ cat.name }}
-                            </option>
+                            <option v-for="cat in categorias" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
                         </select>
-                        <p v-if="form.errors.category_id" class="text-xs text-destructive">{{ form.errors.category_id }}</p>
                     </div>
-
                     <div class="space-y-1.5">
                         <Label for="presentation">Presentación *</Label>
                         <Input id="presentation" v-model="form.presentation" placeholder="Ej: Frasco 250g" required />
-                        <p v-if="form.errors.presentation" class="text-xs text-destructive">{{ form.errors.presentation }}</p>
                     </div>
-
                     <div class="space-y-1.5 sm:col-span-2">
                         <Label for="description">Descripción</Label>
-                        <textarea
-                            id="description"
-                            v-model="form.description"
-                            rows="3"
-                            placeholder="Describe brevemente el producto..."
-                            class="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
-                        <p v-if="form.errors.description" class="text-xs text-destructive">{{ form.errors.description }}</p>
+                        <textarea id="description" v-model="form.description" rows="3" class="w-full rounded-md border border-input bg-background p-3 text-sm"></textarea>
                     </div>
-
+                    <div class="space-y-1.5 sm:col-span-2">
+                        <Label for="photo">Fotografía del producto</Label>
+                        <Input id="photo" type="file" accept="image/*" @change="onPhotoChange" />
+                        <img v-if="photoPreview" :src="photoPreview" alt="Vista previa" class="mt-2 h-32 w-32 rounded-lg border object-cover" />
+                    </div>
                     <div class="flex items-center gap-2 sm:col-span-2">
                         <Checkbox id="is_public" :checked="form.is_public" @update:checked="form.is_public = $event" />
-                        <Label for="is_public">Producto visible públicamente</Label>
+                        <Label for="is_public">Producto visible en el catálogo público</Label>
                     </div>
                 </div>
             </div>
 
-            <!-- Precios y cantidades -->
-            <div class="rounded-xl border bg-card p-6 space-y-4">
-                <h2 class="font-semibold text-base">Precios y cantidades</h2>
+            <div class="space-y-4 rounded-xl border bg-card p-6">
+                <h2 class="text-base font-semibold">Precios y cantidades</h2>
                 <Separator />
-
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div class="space-y-1.5">
                         <Label for="wholesale_price">Precio al comercio (USD)</Label>
-                        <Input id="wholesale_price" v-model="form.wholesale_price" type="number" step="0.01" min="0" placeholder="0.00" />
-                        <p v-if="form.errors.wholesale_price" class="text-xs text-destructive">{{ form.errors.wholesale_price }}</p>
+                        <Input id="wholesale_price" v-model="form.wholesale_price" type="number" step="0.01" min="0" />
                     </div>
-
                     <div class="space-y-1.5">
                         <Label for="suggested_retail_price">Precio sugerido al consumidor (USD)</Label>
-                        <Input id="suggested_retail_price" v-model="form.suggested_retail_price" type="number" step="0.01" min="0" placeholder="0.00" />
-                        <p v-if="form.errors.suggested_retail_price" class="text-xs text-destructive">{{ form.errors.suggested_retail_price }}</p>
+                        <Input id="suggested_retail_price" v-model="form.suggested_retail_price" type="number" step="0.01" min="0" />
                     </div>
-
                     <div class="space-y-1.5">
                         <Label for="minimum_order">Pedido mínimo (unidades)</Label>
-                        <Input id="minimum_order" v-model="form.minimum_order" type="number" min="1" placeholder="1" />
-                        <p v-if="form.errors.minimum_order" class="text-xs text-destructive">{{ form.errors.minimum_order }}</p>
+                        <Input id="minimum_order" v-model="form.minimum_order" type="number" min="1" />
                     </div>
-
                     <div class="space-y-1.5">
-                        <Label for="weekly_capacity">Capacidad semanal (unidades)</Label>
-                        <Input id="weekly_capacity" v-model="form.weekly_capacity" type="number" min="0" placeholder="Opcional" />
-                        <p v-if="form.errors.weekly_capacity" class="text-xs text-destructive">{{ form.errors.weekly_capacity }}</p>
+                        <Label for="weekly_capacity">Capacidad de abastecimiento semanal</Label>
+                        <Input id="weekly_capacity" v-model="form.weekly_capacity" type="number" step="any" />
                     </div>
                 </div>
             </div>
 
-            <!-- Almacenamiento y distribución -->
-            <div class="rounded-xl border bg-card p-6 space-y-4">
-                <h2 class="font-semibold text-base">Almacenamiento y distribución</h2>
+            <div class="space-y-4 rounded-xl border bg-card p-6">
+                <h2 class="text-base font-semibold">Vida útil y conservación</h2>
                 <Separator />
-
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div class="space-y-1.5">
                         <Label for="shelf_life_days">Vida útil (días)</Label>
-                        <Input id="shelf_life_days" v-model="form.shelf_life_days" type="number" min="0" placeholder="Opcional" />
-                        <p v-if="form.errors.shelf_life_days" class="text-xs text-destructive">{{ form.errors.shelf_life_days }}</p>
+                        <Input id="shelf_life_days" v-model="form.shelf_life_days" type="number" min="1" />
                     </div>
-
                     <div class="space-y-1.5">
-                        <Label for="delivery_frequency">Frecuencia de entrega</Label>
-                        <Input id="delivery_frequency" v-model="form.delivery_frequency" placeholder="Ej: Semanal, quincenal" />
-                        <p v-if="form.errors.delivery_frequency" class="text-xs text-destructive">{{ form.errors.delivery_frequency }}</p>
+                        <Label for="storage_conditions">Condiciones de conservación</Label>
+                        <Input id="storage_conditions" v-model="form.storage_conditions" placeholder="Ej: Refrigerado 2-8 °C" />
                     </div>
-
-                    <div class="space-y-1.5 sm:col-span-2">
-                        <Label for="storage_conditions">Condiciones de almacenamiento</Label>
-                        <Input id="storage_conditions" v-model="form.storage_conditions" placeholder="Ej: Lugar fresco y seco, refrigerado" />
-                        <p v-if="form.errors.storage_conditions" class="text-xs text-destructive">{{ form.errors.storage_conditions }}</p>
+                    <div class="space-y-1.5">
+                        <Label for="temp_min">Temperatura mínima (°C)</Label>
+                        <Input id="temp_min" v-model="form.required_temperature_min" type="number" step="0.1" />
                     </div>
-
-                    <div class="space-y-1.5 sm:col-span-2">
-                        <Label for="coverage_zones">Zonas de cobertura</Label>
-                        <Input id="coverage_zones" v-model="form.coverage_zones" placeholder="Ej: Latacunga, Salcedo, Pujilí" />
-                        <p class="text-xs text-muted-foreground">Separadas por comas</p>
-                        <p v-if="form.errors.coverage_zones" class="text-xs text-destructive">{{ form.errors.coverage_zones }}</p>
+                    <div class="space-y-1.5">
+                        <Label for="temp_max">Temperatura máxima (°C)</Label>
+                        <Input id="temp_max" v-model="form.required_temperature_max" type="number" step="0.1" />
                     </div>
                 </div>
             </div>
 
-            <!-- Acciones -->
+            <div class="space-y-4 rounded-xl border bg-card p-6">
+                <h2 class="text-base font-semibold">Entrega y documentación</h2>
+                <Separator />
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="space-y-1.5">
+                        <Label for="coverage_zones">Zonas de entrega (separadas por coma)</Label>
+                        <Input id="coverage_zones" v-model="form.coverage_zones" placeholder="Latacunga, Quito, Ambato" />
+                    </div>
+                    <div class="space-y-1.5">
+                        <Label for="delivery_frequency">Frecuencia de entrega</Label>
+                        <Input id="delivery_frequency" v-model="form.delivery_frequency" placeholder="Ej: Semanal" />
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <Label>Documentación disponible</Label>
+                        <Button type="button" variant="outline" size="sm" @click="form.documentation.push('')">
+                            <Plus class="mr-1 h-4 w-4" />
+                            Agregar
+                        </Button>
+                    </div>
+                    <div v-for="(doc, index) in form.documentation" :key="index" class="flex gap-2">
+                        <Input v-model="form.documentation[index]" placeholder="Ej: RUC, registro sanitario, notificación sanitaria" />
+                        <Button type="button" variant="ghost" size="sm" @click="form.documentation.splice(index, 1)">
+                            <Trash2 class="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            </div>
+
             <div class="flex items-center justify-end gap-3">
                 <Button type="button" variant="outline" as-child>
-                    <Link :href="productosUrl.value">Cancelar</Link>
+                    <Link :href="productosUrl">Cancelar</Link>
                 </Button>
                 <Button type="submit" :disabled="form.processing">
                     {{ form.processing ? 'Guardando...' : 'Registrar producto' }}

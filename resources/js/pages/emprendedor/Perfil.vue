@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { User } from '@lucide/vue';
+import { Download, Share2, User } from '@lucide/vue';
 import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { useTeamRoutes } from '@/composables/useTeamRoutes';
 import type { EntrepreneurProfile } from '@/types';
 
 const props = defineProps<{
     perfil: EntrepreneurProfile | null;
 }>();
 
+const { miPerfil } = useTeamRoutes();
 const isEditing = ref(!props.perfil);
+
+const catalogoUrl = `/catalogo/${props.perfil?.slug ?? ''}`;
 
 const form = useForm({
     business_name: props.perfil?.business_name ?? '',
@@ -24,13 +28,13 @@ const form = useForm({
 
 function submit() {
     if (props.perfil) {
-        form.patch('/mi-perfil', {
+        form.patch(miPerfil.value, {
             onSuccess: () => {
                 isEditing.value = false;
             },
         });
     } else {
-        form.post('/mi-perfil');
+        form.post(miPerfil.value);
     }
 }
 
@@ -41,6 +45,16 @@ function startEditing() {
     form.whatsapp = props.perfil?.whatsapp ?? '';
     form.coverage_zones = props.perfil?.coverage_zones?.join(', ') ?? '';
     isEditing.value = true;
+}
+
+async function compartirCatalogo() {
+    const url = window.location.origin + catalogoUrl;
+    try {
+        await navigator.clipboard.writeText(url);
+        alert('Enlace del catálogo copiado. Compártelo con quien quieras.');
+    } catch {
+        window.prompt('Copia este enlace para compartir tu catálogo:', url);
+    }
 }
 </script>
 
@@ -56,9 +70,21 @@ function startEditing() {
                     {{ perfil ? 'Gestiona la información de tu emprendimiento' : 'Configura tu perfil para empezar' }}
                 </p>
             </div>
-            <Button v-if="perfil && !isEditing" variant="outline" @click="startEditing">
-                Editar perfil
-            </Button>
+            <div v-if="perfil && !isEditing" class="flex flex-wrap gap-2">
+                <Button variant="outline" @click="compartirCatalogo">
+                    <Share2 class="mr-2 h-4 w-4" />
+                    Compartir catálogo
+                </Button>
+                <Button variant="outline" as-child>
+                    <a :href="`${catalogoUrl}/pdf`">
+                        <Download class="mr-2 h-4 w-4" />
+                        Descargar PDF
+                    </a>
+                </Button>
+                <Button variant="outline" @click="startEditing">
+                    Editar perfil
+                </Button>
+            </div>
         </div>
 
         <!-- Vista del perfil -->

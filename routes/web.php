@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CatalogoController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EntrepreneurProfileController;
 use App\Http\Controllers\EstablecimientoController;
@@ -12,6 +13,10 @@ use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
 
+// Catálogo público del emprendedor (sin iniciar sesión)
+Route::get('catalogo/{profile:slug}', [CatalogoController::class, 'show'])->name('catalogo.publico');
+Route::get('catalogo/{profile:slug}/pdf', [CatalogoController::class, 'pdf'])->name('catalogo.pdf');
+
 Route::prefix('{current_team}')
     ->middleware(['auth', 'verified', EnsureTeamMembership::class])
     ->group(function () {
@@ -21,26 +26,33 @@ Route::prefix('{current_team}')
         Route::get('mapa', [EstablecimientoController::class, 'mapa'])->name('establecimientos.mapa');
 
         // CRUD establecimientos
-        Route::resource('establecimientos', EstablecimientoController::class)->names([
-            'index'   => 'establecimientos.index',
-            'create'  => 'establecimientos.create',
-            'store'   => 'establecimientos.store',
-            'show'    => 'establecimientos.show',
-            'edit'    => 'establecimientos.edit',
-            'update'  => 'establecimientos.update',
-            'destroy' => 'establecimientos.destroy',
-        ]);
+        Route::patch('establecimientos/{establishment}/verify', [EstablecimientoController::class, 'verify'])
+            ->name('establecimientos.verify');
+
+        Route::resource('establecimientos', EstablecimientoController::class)
+            ->parameters(['establecimientos' => 'establishment'])
+            ->names([
+                'index'   => 'establecimientos.index',
+                'create'  => 'establecimientos.create',
+                'store'   => 'establecimientos.store',
+                'show'    => 'establecimientos.show',
+                'edit'    => 'establecimientos.edit',
+                'update'  => 'establecimientos.update',
+                'destroy' => 'establecimientos.destroy',
+            ]);
 
         // Productos
-        Route::resource('productos', ProductoController::class)->names([
-            'index'   => 'productos.index',
-            'create'  => 'productos.create',
-            'store'   => 'productos.store',
-            'show'    => 'productos.show',
-            'edit'    => 'productos.edit',
-            'update'  => 'productos.update',
-            'destroy' => 'productos.destroy',
-        ]);
+        Route::resource('productos', ProductoController::class)
+            ->parameters(['productos' => 'product'])
+            ->names([
+                'index'   => 'productos.index',
+                'create'  => 'productos.create',
+                'store'   => 'productos.store',
+                'show'    => 'productos.show',
+                'edit'    => 'productos.edit',
+                'update'  => 'productos.update',
+                'destroy' => 'productos.destroy',
+            ]);
 
         // Oportunidades
         Route::get('oportunidades', [OportunidadController::class, 'index'])->name('oportunidades.index');

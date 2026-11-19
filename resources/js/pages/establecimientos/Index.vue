@@ -73,13 +73,13 @@ function getLinks(): PaginationLink[] {
             </div>
             <div class="flex gap-2">
                 <Button variant="outline" as-child>
-                    <Link :href="mapa.value">
+                    <Link :href="mapa">
                         <Map class="mr-2 h-4 w-4" />
                         Ver mapa
                     </Link>
                 </Button>
                 <Button as-child>
-                    <Link :href="establecimientoCreate.value">
+                    <Link :href="establecimientoCreate">
                         <Plus class="mr-2 h-4 w-4" />
                         Registrar establecimiento
                     </Link>

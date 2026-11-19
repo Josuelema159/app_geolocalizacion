@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Package, Pencil, Plus, Trash2 } from '@lucide/vue';
+import { Download, Package, Pencil, Plus, Share2, Trash2 } from '@lucide/vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useTeamRoutes } from '@/composables/useTeamRoutes';
 import type { EntrepreneurProfile, PaginatedData, Product } from '@/types';
 
 type PaginationLink = {
@@ -16,9 +17,23 @@ const props = defineProps<{
     perfil: EntrepreneurProfile | null;
 }>();
 
+const { productoCreate, miPerfil, producto } = useTeamRoutes();
+
+const catalogoUrl = `/catalogo/${props.perfil?.slug ?? ''}`;
+
 function deleteProduct(product: Product) {
     if (confirm(`¿Eliminar el producto "${product.name}"? Esta acción no se puede deshacer.`)) {
-        router.delete(`/productos/${product.slug}`);
+        router.delete(producto(product.slug).value);
+    }
+}
+
+async function compartirCatalogo() {
+    const url = window.location.origin + catalogoUrl;
+    try {
+        await navigator.clipboard.writeText(url);
+        alert('Enlace del catálogo copiado.Compártelo con quien quieras.');
+    } catch {
+        window.prompt('Copia este enlace para compartir tu catálogo:', url);
     }
 }
 
@@ -37,12 +52,24 @@ function getLinks(): PaginationLink[] {
                 <h1 class="text-2xl font-semibold">Mis Productos</h1>
                 <p class="text-sm text-muted-foreground">Gestiona tu catálogo de productos</p>
             </div>
-            <Button v-if="perfil" as-child>
-                <Link :href="productoCreate.value">
-                    <Plus class="mr-2 h-4 w-4" />
-                    Nuevo producto
-                </Link>
-            </Button>
+            <div v-if="perfil" class="flex flex-wrap gap-2">
+                <Button variant="outline" @click="compartirCatalogo">
+                    <Share2 class="mr-2 h-4 w-4" />
+                    Compartir catálogo
+                </Button>
+                <Button variant="outline" as-child>
+                    <a :href="`${catalogoUrl}/pdf`">
+                        <Download class="mr-2 h-4 w-4" />
+                        Descargar PDF
+                    </a>
+                </Button>
+                <Button as-child>
+                    <Link :href="productoCreate">
+                        <Plus class="mr-2 h-4 w-4" />
+                        Nuevo producto
+                    </Link>
+                </Button>
+            </div>
         </div>
 
         <!-- Sin perfil -->
@@ -56,7 +83,7 @@ function getLinks(): PaginationLink[] {
                     </p>
                 </div>
                 <Button as-child class="w-full">
-                    <Link :href="miPerfilUrl.value">Crear perfil de emprendedor</Link>
+                    <Link :href="miPerfil">Crear perfil de emprendedor</Link>
                 </Button>
             </div>
         </div>
@@ -74,7 +101,7 @@ function getLinks(): PaginationLink[] {
                         </p>
                     </div>
                     <Button as-child class="w-full">
-                        <Link :href="productoCreate.value">
+                        <Link :href="productoCreate">
                             <Plus class="mr-2 h-4 w-4" />
                             Registrar producto
                         </Link>
@@ -89,9 +116,15 @@ function getLinks(): PaginationLink[] {
                     :key="product.id"
                     class="group rounded-xl border bg-card overflow-hidden hover:shadow-md transition-shadow"
                 >
-                    <!-- Foto placeholder -->
+                    <!-- Foto -->
                     <div class="aspect-video bg-muted/50 flex items-center justify-center">
-                        <Package class="h-10 w-10 text-muted-foreground/30" />
+                        <img
+                            v-if="product.photo_path"
+                            :src="product.photo_path.startsWith('http') ? product.photo_path : `/storage/${product.photo_path}`"
+                            :alt="product.name"
+                            class="h-full w-full object-cover"
+                        />
+                        <Package v-else class="h-10 w-10 text-muted-foreground/30" />
                     </div>
 
                     <div class="p-4 space-y-3">
@@ -120,10 +153,10 @@ function getLinks(): PaginationLink[] {
 
                         <div class="flex gap-2 pt-1">
                             <Button variant="ghost" size="sm" class="flex-1" as-child>
-                                <Link :href="`/productos/${product.slug}`">Ver</Link>
+                                <Link :href="producto(product.slug).value">Ver</Link>
                             </Button>
                             <Button variant="outline" size="sm" as-child>
-                                <Link :href="`/productos/${product.slug}/edit`">
+                                <Link :href="`${producto(product.slug).value}/edit`">
                                     <Pencil class="h-3.5 w-3.5" />
                                 </Link>
                             </Button>

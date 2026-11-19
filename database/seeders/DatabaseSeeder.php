@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             LatacungaDataSeeder::class,
             RolesAndCategoriesSeeder::class,
+            TeamSeeder::class,
         ]);
     }
 }

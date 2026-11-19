@@ -39,7 +39,7 @@ class PropuestaController extends Controller
         return redirect()->back()->with('success', 'Propuesta enviada correctamente.');
     }
 
-    public function update(Request $request, Proposal $propuesta)
+    public function update(Request $request, $currentTeam, Proposal $propuesta)
     {
         $data = $request->validate([
             'merchant_response' => 'required|in:' . implode(',', Proposal::MERCHANT_RESPONSES),

@@ -22,6 +22,11 @@ class Product extends Model
         'is_public'                => 'boolean',
     ];
 
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
     public function entrepreneurProfile(): BelongsTo
     {
         return $this->belongsTo(EntrepreneurProfile::class);

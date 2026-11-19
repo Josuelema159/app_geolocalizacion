@@ -4,7 +4,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useTeamRoutes } from '@/composables/useTeamRoutes';
 import type { Establishment } from '@/types';
 
-const { establecimientos } = useTeamRoutes();
+const { establecimientos: establecimientosUrl } = useTeamRoutes();
 
 const props = defineProps<{
     establecimientos: Establishment[];
@@ -191,7 +191,7 @@ function flyTo(est: Establishment) {
             </select>
             <span class="ml-auto text-sm text-muted-foreground">{{ filteredEstablishments.length }} establecimientos</span>
             <Link
-                :href="establecimientos.value"
+                :href="establecimientosUrl"
                 class="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:bg-primary/90"
             >
                 Ver listado

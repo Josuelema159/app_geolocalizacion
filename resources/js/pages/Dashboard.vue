@@ -38,7 +38,7 @@ const { mapa, establecimientos, productos, oportunidades } = useTeamRoutes();
 
         <!-- Tarjetas de resumen -->
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Link :href="establecimientos.value">
+            <Link :href="establecimientos">
                 <Card class="cursor-pointer transition-shadow hover:shadow-md">
                     <CardHeader class="flex flex-row items-center justify-between pb-2">
                         <CardTitle class="text-sm font-medium text-muted-foreground">Establecimientos</CardTitle>
@@ -51,7 +51,7 @@ const { mapa, establecimientos, productos, oportunidades } = useTeamRoutes();
                 </Card>
             </Link>
 
-            <Link :href="mapa.value">
+            <Link :href="mapa">
                 <Card class="cursor-pointer transition-shadow hover:shadow-md">
                     <CardHeader class="flex flex-row items-center justify-between pb-2">
                         <CardTitle class="text-sm font-medium text-muted-foreground">Mapa de oportunidades</CardTitle>
@@ -64,7 +64,7 @@ const { mapa, establecimientos, productos, oportunidades } = useTeamRoutes();
                 </Card>
             </Link>
 
-            <Link :href="productos.value">
+            <Link :href="productos">
                 <Card class="cursor-pointer transition-shadow hover:shadow-md">
                     <CardHeader class="flex flex-row items-center justify-between pb-2">
                         <CardTitle class="text-sm font-medium text-muted-foreground">Mis productos</CardTitle>
@@ -77,7 +77,7 @@ const { mapa, establecimientos, productos, oportunidades } = useTeamRoutes();
                 </Card>
             </Link>
 
-            <Link :href="oportunidades.value">
+            <Link :href="oportunidades">
                 <Card class="cursor-pointer transition-shadow hover:shadow-md">
                     <CardHeader class="flex flex-row items-center justify-between pb-2">
                         <CardTitle class="text-sm font-medium text-muted-foreground">Oportunidades</CardTitle>
@@ -96,19 +96,19 @@ const { mapa, establecimientos, productos, oportunidades } = useTeamRoutes();
             <h2 class="mb-3 text-sm font-medium text-muted-foreground uppercase tracking-wide">Accesos rápidos</h2>
             <div class="flex flex-wrap gap-3">
                 <Link
-                    :href="mapa.value"
+                    :href="mapa"
                     class="rounded-lg border bg-card px-4 py-3 text-sm font-medium hover:bg-muted transition-colors flex items-center gap-2"
                 >
                     <MapPin class="h-4 w-4" /> Ver mapa
                 </Link>
                 <Link
-                    :href="establecimientos.value + '/create'"
+                    :href="establecimientos + '/create'"
                     class="rounded-lg border bg-card px-4 py-3 text-sm font-medium hover:bg-muted transition-colors flex items-center gap-2"
                 >
                     <Store class="h-4 w-4" /> Registrar establecimiento
                 </Link>
                 <Link
-                    :href="productos.value + '/create'"
+                    :href="productos + '/create'"
                     class="rounded-lg border bg-card px-4 py-3 text-sm font-medium hover:bg-muted transition-colors flex items-center gap-2"
                 >
                     <Package class="h-4 w-4" /> Agregar producto

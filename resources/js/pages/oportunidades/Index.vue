@@ -5,6 +5,10 @@ import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Opportunity, PaginatedData } from '@/types';
+import { useTeamRoutes } from '@/composables/useTeamRoutes';
+
+const { slug, establecimiento, establecimientos: establecimientosUrl, mapa: mapaUrl } = useTeamRoutes();
+const oportunidadUrl = (id: number) => `/${slug.value}/oportunidades/${id}`;
 
 type PaginationLink = {
     url: string | null;
@@ -72,7 +76,7 @@ function startEditingNotes(op: Opportunity) {
 }
 
 function saveNotes(op: Opportunity) {
-    notesForm.patch(`/oportunidades/${op.id}`, {
+    notesForm.patch(oportunidadUrl(op.id), {
         onSuccess: () => {
             editingNotes.value = null;
         },
@@ -81,7 +85,7 @@ function saveNotes(op: Opportunity) {
 
 function changeStatus(op: Opportunity, newStatus: string) {
     router.patch(
-        `/oportunidades/${op.id}`,
+        oportunidadUrl(op.id),
         { status: newStatus },
         {
             preserveState: true,
@@ -122,7 +126,7 @@ function getLinks(): PaginationLink[] {
                 <p class="text-sm text-muted-foreground">Seguimiento de establecimientos donde ofreces tus productos</p>
             </div>
             <Button variant="outline" as-child>
-                <Link :href="establecimientosUrl.value">
+                <Link :href="establecimientosUrl">
                     <TrendingUp class="mr-2 h-4 w-4" />
                     Buscar establecimientos
                 </Link>
@@ -154,7 +158,7 @@ function getLinks(): PaginationLink[] {
                     </p>
                 </div>
                 <Button as-child class="w-full">
-                    <Link :href="mapaUrl.value">Ver mapa de establecimientos</Link>
+                    <Link :href="mapaUrl">Ver mapa de establecimientos</Link>
                 </Button>
             </div>
         </div>
@@ -240,7 +244,7 @@ function getLinks(): PaginationLink[] {
 
                                     <!-- Ver establecimiento -->
                                     <Button v-if="op.establishment" size="sm" variant="ghost" class="h-7 px-2 text-xs" as-child>
-                                        <Link :href="`/establecimientos/${op.establishment.slug}`">
+                                        <Link :href="establecimiento(op.establishment.slug).value">
                                             Ver ficha
                                             <ChevronRight class="ml-1 h-3.5 w-3.5" />
                                         </Link>

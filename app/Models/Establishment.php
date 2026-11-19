@@ -25,9 +25,19 @@ class Establishment extends Model
         'privacy_consent_at'       => 'datetime',
     ];
 
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
     public function merchant(): BelongsTo
     {
         return $this->belongsTo(User::class, 'merchant_id');
+    }
+
+    public function needs(): HasMany
+    {
+        return $this->hasMany(EstablishmentNeed::class);
     }
 
     public function categories(): BelongsToMany

@@ -15,18 +15,19 @@ class LatacungaDataSeeder extends Seeder
         $merchantRole = Role::findByName('merchant');
         $entrepreneurRole = Role::findByName('entrepreneur');
 
+        // nombre, tipo, latitud, longitud, parroquia, recepción, verificado, necesidades
         $establishments = [
-            ['MINISUPER EL CENTRO', 'tienda', -0.9339000, -78.6145000, 'La Matriz', 'recibe_propuestas', true],
-            ['SUPERMERCADO SAN FRANCISCO', 'supermercado', -0.9351000, -78.6162000, 'La Matriz', 'por_confirmar', false],
-            ['MINIMARKET LOS ANDES', 'minimarket', -0.9402000, -78.6221000, 'San Buena Ventura', 'recibe_propuestas', true],
-            ['PANADERIA DON JUAN', 'panaderia', -0.9324000, -78.6118000, 'El Rosal', 'recibe_propuestas', false],
-            ['TIENDA EL PARAISO', 'tienda', -0.9278000, -78.6189000, 'San Sebastian', 'no_recibe_por_ahora', false],
-            ['MINISUPER LA ESPERANZA', 'tienda', -0.9443000, -78.6097000, 'Eloy Alfaro', 'por_confirmar', false],
-            ['DISTRIBUIDORA ECUADOR', 'distribuidor', -0.9491000, -78.6254000, 'Ignacio Flores', 'recibe_propuestas', true],
-            ['SUPERMERCADO EL SOL', 'supermercado', -0.9305000, -78.6092000, 'La Matriz', 'recibe_propuestas', true],
+            ['MINISUPER EL CENTRO', 'tienda', -0.9339, -78.6145, 'La Matriz', 'recibe', true, ['Yogurt natural', 'Pan de yuca']],
+            ['SUPERMERCADO SAN FRANCISCO', 'supermercado', -0.9351, -78.6162, 'La Matriz', 'por_confirmar', false, ['Productos lácteos', 'Frutas y verduras']],
+            ['MINIMERCADO LOS ANDES', 'minimercado', -0.9402, -78.6221, 'San Buena Ventura', 'recibe', true, ['Bebidas naturales', 'Snacks']],
+            ['PANADERIA DON JUAN', 'tienda', -0.9324, -78.6118, 'El Rosal', 'recibe', false, ['Harina', 'Azúcar']],
+            ['TIENDA EL PARAISO', 'tienda', -0.9278, -78.6189, 'San Sebastian', 'no_recibe', false, []],
+            ['MINISUPER LA ESPERANZA', 'tienda', -0.9443, -78.6097, 'Eloy Alfaro', 'por_confirmar', false, ['Aceite', 'Arroz']],
+            ['DISTRIBUIDORA ECUADOR', 'minimercado', -0.9491, -78.6254, 'Ignacio Flores', 'recibe', true, ['Lácteos', 'Bebidas']],
+            ['SUPERMERCADO EL SOL', 'supermercado', -0.9305, -78.6092, 'La Matriz', 'recibe', true, ['Productos orgánicos', 'Mermeladas']],
         ];
 
-        foreach ($establishments as $index => [$name, $type, $latitude, $longitude, $parish, $reception, $verified]) {
+        foreach ($establishments as $index => [$name, $type, $latitude, $longitude, $parish, $reception, $verified, $needs]) {
             $merchant = \App\Models\User::query()->firstOrCreate(
                 ['email' => 'merchant'.($index + 1).'@latacunga.test'],
                 [
@@ -43,10 +44,12 @@ class LatacungaDataSeeder extends Seeder
                 ],
             );
 
+            $categoryLacteos = DB::table('categories')->where('slug', 'lacteos')->first();
+
             DB::table('establishments')->updateOrInsert(
                 ['slug' => Str::slug($name)],
                 [
-                    'merchant_id' => $type === 'tienda' ? null : $merchant->id,
+                    'merchant_id' => $merchant->id,
                     'name' => $name,
                     'type' => $type,
                     'address' => 'Centro comercial, sector '.$parish,
@@ -59,14 +62,46 @@ class LatacungaDataSeeder extends Seeder
                     'reception_status' => $reception,
                     'verification_status' => $verified ? 'verificado' : 'pendiente',
                     'verified_at' => $verified ? now() : null,
+                    'last_verified_at' => $verified ? now() : null,
+                    'commercial_contact_name' => 'Área de Compras',
                     'commercial_phone' => '09'.str_pad((string) (12345678 + $index), 8, '0', STR_PAD_LEFT),
                     'authorized_channel' => 'whatsapp',
-                    'has_refrigeration' => in_array($type, ['supermercado', 'minimarket', 'tienda'], true),
+                    'attention_hours' => json_encode(['Lunes a viernes: 08:00 - 18:00', 'Sábados: 09:00 - 13:00']),
+                    'supplier_attention_hours' => json_encode(['Martes y jueves: 09:00 - 11:00']),
+                    'entry_requirements' => json_encode(['RUC actualizado', 'Notificación sanitaria', 'Muestra del producto']),
+                    'purchase_conditions' => json_encode([
+                        'payment_mode' => 'Contado a 15 días',
+                        'initial_order' => '12 unidades',
+                        'returns' => 'Devolución en 5 días si el producto no cumple especificaciones',
+                    ]),
+                    'supermarket_purchase_mode' => $type === 'supermercado' ? 'oficina_central' : null,
+                    'central_office_contact' => $type === 'supermercado' ? 'compras@supermercado.test / 03 280 0000' : null,
+                    'has_refrigeration' => in_array($type, ['supermercado', 'minimercado', 'tienda'], true),
+                    'refrigeration_capacity' => $type === 'supermercado' ? 'Cámara de 12 m³' : null,
+                    'weekly_purchase_volume' => 100 + ($index * 25),
+                    'supply_frequency' => 'Semanal',
                     'privacy_consent_at' => now(),
                     'updated_at' => now(),
                     'created_at' => now(),
                 ],
             );
+
+            $establishment = DB::table('establishments')->where('slug', Str::slug($name))->first();
+
+            DB::table('establishment_needs')->where('establishment_id', $establishment->id)->delete();
+            foreach ($needs as $needName) {
+                DB::table('establishment_needs')->insert([
+                    'establishment_id' => $establishment->id,
+                    'category_id' => $categoryLacteos?->id,
+                    'product_name' => $needName,
+                    'quantity' => '20 unidades por semana',
+                    'frequency' => 'Semanal',
+                    'notes' => 'Buscamos proveedores locales de Latacunga.',
+                    'status' => 'buscando',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
         $entrepreneur = \App\Models\User::query()->firstOrCreate(
@@ -93,7 +128,7 @@ class LatacungaDataSeeder extends Seeder
                 [
                     'business_name' => 'Sabores Cotopaxi',
                     'slug' => 'sabores-cotopaxi',
-                    'description' => 'Produccion artesanal de alimentos para comercios locales.',
+                    'description' => 'Producción artesanal de alimentos para comercios locales de Latacunga.',
                     'phone' => '0987654321',
                     'whatsapp' => '0987654321',
                     'coverage_zones' => json_encode(['Latacunga', 'San Buena Ventura', 'La Matriz']),
@@ -109,18 +144,19 @@ class LatacungaDataSeeder extends Seeder
                     'entrepreneur_profile_id' => $profile->id,
                     'category_id' => $category->id,
                     'name' => 'Yogurt artesanal natural',
+                    'description' => 'Yogurt natural elaborado con leche fresca de ganado de Cotopaxi. Sin conservantes.',
                     'presentation' => 'Botella de 500 ml',
                     'wholesale_price' => 1.25,
                     'suggested_retail_price' => 1.80,
                     'minimum_order' => 24,
                     'weekly_capacity' => 300,
                     'shelf_life_days' => 15,
-                    'storage_conditions' => 'Refrigeracion',
+                    'storage_conditions' => 'Refrigeración de 2 °C a 6 °C',
                     'required_temperature_min' => 2,
                     'required_temperature_max' => 6,
-                    'coverage_zones' => json_encode(['Latacunga']),
+                    'coverage_zones' => json_encode(['Latacunga', 'Salcedo', 'Pujilí']),
                     'delivery_frequency' => 'Semanal',
-                    'documentation' => json_encode(['RUC', 'Notificacion sanitaria']),
+                    'documentation' => json_encode(['RUC', 'Notificación sanitaria', 'Registro de establecimiento']),
                     'is_public' => true,
                     'updated_at' => now(),
                     'created_at' => now(),
