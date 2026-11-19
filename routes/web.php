@@ -11,7 +11,16 @@ use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'Welcome')->name('home');
+Route::get('/', function () {
+    if (auth()->check()) {
+        $team = auth()->user()->currentTeam ?? auth()->user()->ownedTeams()->first();
+        if ($team) {
+            return redirect()->route('establecimientos.mapa', ['current_team' => $team->slug]);
+        }
+        return redirect()->route('dashboard', ['current_team' => $team?->slug ?? 'mi-equipo']);
+    }
+    return redirect()->route('login');
+})->name('home');
 
 // Catálogo público del emprendedor (sin iniciar sesión)
 Route::get('catalogo/{profile:slug}', [CatalogoController::class, 'show'])->name('catalogo.publico');
